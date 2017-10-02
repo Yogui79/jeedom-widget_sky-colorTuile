@@ -1,0 +1,579 @@
+<div style="display:block" class="colorTuile-#uid# container-fluid #history# tooltips cmd cmd-widget" data-type="info" data-subtype="numeric" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#" title="#collectDate#" >
+  <input type="hidden" value="#state#"/>
+  <style>
+    @-webkit-keyframes clignoteWeb#id#     
+    {
+      0%{background-color:#FF0000;color:#FFFFFF;}
+      100%{background-color:#FFFFFF;color:#FF0000;}
+
+    } 
+
+    @-ms-keyframes clignoteMs#id#
+    {
+      0%{background-color:#FF0000;color:#FFFFFF;}
+      100%{background-color:#FFFFFF;color:#FF0000;}
+    } 
+
+    @-moz-keyframes clignoteMoz#id#     
+    {
+      0%{background-color:#FF0000;color:#FFFFFF;}
+      100%{background-color:#FFFFFF;color:#FF0000;}
+    }               
+
+    @-o-keyframes clignoteO#id#           
+    {
+      0%{background-color:#FF0000;color:#FFFFFF;}
+      100%{background-color:#FFFFFF;color:#FF0000;}
+    }       
+
+    @keyframes clignote#id#
+    {
+      0%{background-color:#FF0000;color:#FFFFFF;}
+      100%{background-color:#FFFFFF;color:#FF0000;}
+    }   
+
+
+  </style>
+  <script>
+    /**********************************************************************************************************************************************/
+    /******************************************* Options de personnalisation Valeur par defaut ***************************************************/
+    /********************************************************************************************************************************************/
+    /**1** Couleur Tuile **/         var couleurTuile = ("#couleurTuile#" != '#'+'couleurTuile#') ? ConvertPara("#couleurTuile#") : false ;//
+    /**2** Clignote Tuile **/        var clignoteTuile = ("#clignoteTuile#" != '#'+'clignoteTuile#') ? Convertblink("#clignoteTuile#") : false ;//
+    /**3** Couleur Texte **/         var couleurText = ("#couleurText#" != '#'+'couleurText#') ? ConvertPara("#couleurText#") : 'rgb(255,255,255)' ;//
+    /*********************************************************************************************************************************************/
+    /********************************************************************************************************************************************/
+    /*******************************************************************************************************************************************/
+	
+    var testVersionJeedom = /.*v2\.\d?\d\.\d?\d/i.test($('#bt_jeedomAbout').text());
+    //Retourne le type de couleur passer en argument
+    function TypeCouleur(valeur){
+      var typeCouleur;
+//console.log("fonction typeCouleur valeur", valeur);
+      if(/true|false/.test(valeur)){
+        typeCouleur = 'bool';
+      }else if(/^#[a-zA-Z0-9]{3,6}$/.test(valeur)){
+        typeCouleur = 'html';
+      }else if(/^rgb\([012]?\d?\d?, ?[012]?\d?\d, ?[012]?\d?\d\)$/i.test(valeur)){
+        typeCouleur = 'rgb';
+      }else if(/^rgba\([012]?\d?\d?, ?[012]?\d?\d?, ?[012]?\d?\d?,? ?[01]?\.?\d*\)$/i.test(valeur)){
+        typeCouleur = 'rgba';
+      }else if(/^[a-zA-Z]{3,}$/i.test(valeur)){
+        typeCouleur = 'nom';
+      }else if(/^\d{1,}:.+\&*/i.test(valeur)|| /^\-\d{1,}:.+\&*/i.test(valeur)){
+        typeCouleur = 'objet';
+      }else if(/^[a-zA-Z0-9#\(\),\-]+\&/i.test(valeur)){
+        typeCouleur = 'array';
+      }else{
+        typeCouleur = 'type couleur inconnu';
+      }
+// console.log("fonction typeCouleur retourn", typeCouleur);
+      return typeCouleur;
+    }
+    //Permet de convertitre les paramètres en donnée utilisable en JS
+    function ConvertPara(valeur){
+//console.log("function ConvertPara",valeur);
+      var para, test = TypeCouleur(valeur);
+      if(test == 'bool' || test == 'html'|| test == 'rgb' || test == 'nom'){         
+        if(test == 'bool'){
+          if(valeur == 'true'){
+            valeur = true;
+          }else{
+            valeur = false;
+          }
+        }
+        para =  valeur;
+      }else if(test == 'objet'){         
+        var arrayVal = valeur.split('&'), cleVal;
+        para = new Object();
+        for(var cle in arrayVal){
+          cleVal = arrayVal[cle].split(':');
+          para[cleVal[0]] = cleVal[1];           
+        }
+      }else if(test == 'array'){
+        para = valeur.split('&');
+      }else{
+        para =  'erreur';
+      }
+//console.log("function ConvertPara return",para);
+      return para;
+    }
+
+    //Fonction qui détermine quelle couleur utiliser si plusieurs sont fournie
+    function couleur(oValeur, value){
+      var couleurs = oValeur;
+//console.log("couleurs = oValeur",oValeur);
+//console.log("couleurs = value",value);
+      if($.type(oValeur) === 'object'){
+        for(var cle in oValeur){
+//console.log('couleur -> clé', cle);
+//console.log('TEST clé',/^\-.+/.test(cle));
+          if((/^\-\d+/.test(cle) && /^\-\d+/.test(value)) || (/^\d+/.test(cle) && /^\d+/.test(value))){
+              if(parseFloat(value) >= parseFloat(cle)){
+              		couleurs = oValeur[cle];
+//console.log("couleurs choisie",couleurs);
+           	}
+          }
+/*          if(parseFloat(value) >= parseFloat(cle)){
+            couleurs = oValeur[cle];
+console.log("couleurs choisie",couleurs);
+          }else{
+            //couleurs = false;
+          }*/
+        }
+      }
+
+      if($.type(couleurs) === 'object'){
+        couleurs = "";
+      }
+
+      if( opacity = /rgba\(.*([0-9]+\.[0-9]+)\)/.exec($('.colorTuile-#uid#').closest('.allowReorderCmd').css('background-color'))){
+//console.log('IF opasity',opacity);
+      }else{
+        opacity = new Array('',1);         
+      }
+
+      var typeCouleurUser = TypeCouleur(couleurs);        
+
+      if(opacity[1] && typeCouleurUser != 'rgba'){
+        if(TypeCouleur(couleurs) == 'rgb'){
+          couleurs = couleurs.substring(0,couleurs.length -1)+', '+opacity[1]+')';//ajout le alpha au rgb (peut-être a corriger et ajouter a après rgb)
+          couleurs = couleurs.replace('rgb','rgba'); // add yogui
+        }else if(typeCouleurUser == 'html'){
+          var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(couleurs);
+          couleurs = 'rgba('+parseInt(result[1], 16)+','+parseInt(result[2], 16)+','+parseInt(result[3], 16)+','+opacity[1]+')';
+
+        }else if(typeCouleurUser == 'nom'){
+          var nomCouleur = couleurs.toLowerCase();
+          var oNomCouleurs = {black:'0, 0, 0',
+                              dimgray:'105, 105, 105',
+                              grey:'128, 128, 128',
+                              darkgray:'169, 169, 169',
+                              silver:'92, 192, 192',
+                              lightgray:'211, 211, 211',
+                              gainsboro:'220, 220, 220',
+                              whitesmoke:'245, 245, 245',
+                              white:'255, 255, 255',
+                              rosybrown:'188, 143, 143',
+                              lightcoral:'240, 128, 128',
+                              indianred:'205, 92, 92',
+                              brown:'165, 42, 42',
+                              firebrick:'178, 34, 34',
+                              maroon:'128, 0, 0',
+                              darkred:'139, 0, 0',
+                              red:'255, 0, 0',
+                              mistyrose:'255, 228, 225',
+                              salmon:'250, 128, 114',
+                              tomato:'255, 99, 71',
+                              darksalmon:'233, 150, 122',
+                              coral:'255, 127, 80',
+                              lightsalmon:'255, 160, 122',
+                              orangered:'255, 69, 0',
+                              sienna:'160, 82, 45',
+                              seashell:'255, 245, 238',
+                              chocolate:'210, 105, 30',
+                              saddlebrown:'139, 69, 19',
+                              peachpuff:'255, 218, 185',
+                              sandybrown:'244, 164, 96',
+                              linen:'250, 250, 230',
+                              peru:'205, 133, 63',
+                              bisque:'255, 228, 196',
+                              darkorange:'255, 140, 0',
+                              antiquewhite:'250, 235, 215',
+                              tan:'210, 180, 140',
+                              burlywood:'222, 184, 135',
+                              navajowhite:'255, 222, 173',
+                              papayawhip:'255, 239, 213',
+                              blanchedalmond:'255, 235, 205',
+                              moccasin:'255, 228, 181',
+                              floralwhite:'255, 250, 240',
+                              oldlace:'253, 245, 230',
+                              wheat:'245, 222, 179',
+                              orange:'255, 165, 0',
+                              goldenrod:'218, 165, 32',
+                              darkgoldenrod:'184, 134, 11',
+                              cornsilk:'255, 248, 220',
+                              gold:'255, 215, 0',
+                              lemonchiffon:'255, 250, 205',
+                              khaki:'240, 230, 140',
+                              palegoldenrod:'238, 232, 170',
+                              darkkhaki:'189, 183, 107',
+                              ivory:'255, 255, 240',
+                              beige:'245, 245, 220',
+                              lightyellow:'255, 255, 224',
+                              lightgoldenrodyellow:'250, 250, 210',
+                              olive:'128, 128, 0',
+                              yellow:'255, 255, 0',
+                              olivedrab:'107, 142, 35',
+                              yellowgreen:'154, 205, 50',
+                              darkolivegreen:'85, 107, 47',
+                              greenyellow:'173, 255, 47',
+                              lawngreen:'124, 252, 0',
+                              chartreuse:'12,7 255, 0',
+                              honeydew:'240, 255, 240',
+                              darkseagreen:'143, 188, 143',
+                              lightgreen:'144, 238, 144',
+                              palegreen:'152, 251, 152',
+                              forestgreen:'34 139 34',
+                              limegreen:'50, 205, 50',
+                              darkgreen:'0, 100, 0',
+                              green:'0, 128, 0',
+                              lime:'0, 255, 0',
+                              mediumseagreen:'60, 179, 113',
+                              seagreen:'46, 139, 87',
+                              mintcream:'245, 255, 250',
+                              springgreen:'0, 255, 127',
+                              mediumspringgreen:'0, 250, 154',
+                              mediumaquamarine:'102, 205, 170',
+                              aquamarine:'127, 255, 212',
+                              turquoise:'64, 224, 208',
+                              lightseagreen:'32, 178, 170',
+                              mediumturquoise:'72, 209, 204',
+                              azure:'240, 255, 255',
+                              lightcyan:'224, 255, 255',
+                              paleturquoise:'175, 238, 238',
+                              darkslategrey:'47, 79, 79',
+                              teal:'0, 128, 128',
+                              darkcyan:'0, 139, 139',
+                              darkturquoise :'0, 206, 206',
+                              cyan:'0, 255, 255',
+                              aqua:'0, 255, 255',
+                              cadetblue:'95, 158, 160',
+                              powderblue:'176, 224, 230',
+                              lightblue :'173, 216, 230',
+                              deepskyblue:'0, 191, 255',
+                              skyblue:'135, 206, 235',
+                              lightskyblue:'135, 206, 250',
+                              aliceblue:'240, 248, 255',
+                              steelblue:'70, 130, 180',
+                              dodgerblue:'30, 144, 255',
+                              slategrey:'112, 128, 144',
+                              lightslategrey:'119, 136, 153',
+                              lightsteelblue:'176, 196, 222',
+                              cornflowerblue:'100, 149, 237',
+                              royalblue:'65, 105, 225',
+                              ghostwhite:'248, 248, 255',
+                              lavender:'230, 230, 250',
+                              midnightblue:'25, 25, 112',
+                              navy:'0, 0, 128',
+                              darkblue:'0, 0, 139',
+                              mediumblue:'0, 0, 205',
+                              blue:'0, 0, 255',
+                              darkslateblue:'72, 61, 139',
+                              slateblue:'106, 90, 205',
+                              mediumslateblue:'123, 104, 238',
+                              mediumpurple:'147, 112, 219',
+                              blueviolet:'138, 43, 226',
+                              indigo:'75, 0, 130',
+                              darkorchid:'153, 50, 204',
+                              darkviolet:'148, 0, 211',
+                              mediumorchid:'186, 85, 211',
+                              thistle:'216, 191, 216',
+                              plum:'221, 160, 221',
+                              violet:'238, 130, 238',
+                              purple:'128, 0, 128',
+                              darkmagenta:'139, 0, 139',
+                              fuchsia:'255, 0, 255',
+                              magenta:'255, 0, 255',
+                              orchid:'218, 112, 214',
+                              mediumvioletred:'199, 21, 133',
+                              deeppink:'255, 20, 147',
+                              hotpink:'255, 105, 180',
+                              lavenderblush:'255, 240, 245',
+                              palevioletred:'219, 112, 147',
+                              crimson:'220, 20, 60',
+                              pink:'255, 192, 203',
+                              lightpink:'255, 182, 193'};
+          couleurs = 'rgba('+oNomCouleurs[nomCouleur]+','+opacity[1]+')';
+        }else{
+          if(couleurs){
+            couleurs = opacity[0];
+          }else{
+            couleurs = "";
+          }
+        }
+      }
+      return couleurs;
+    }
+
+    //***************************Suite de fonction pour le clignotement ***********************************************//
+    //converti parametre si clignote ou pas pour une valeur
+    function Convertblink(valeur){
+      var parablink, test = TypeBlink(valeur);
+      if(test == 'bool' || test == 'html'|| test == 'rgb' || test == 'nom'){         
+        if(test == 'bool'){
+          if(valeur == 'true'){
+            valeur = true;
+          }else{
+            valeur = false;
+          }
+        }
+        parablink =  valeur;
+      }else if(test == 'objet'){         
+
+        var arrayVal = valeur.split('&'), cleVal;
+        parablink = new Object();
+        for(var cle in arrayVal){
+          cleVal = arrayVal[cle].split(':');
+          parablink[cleVal[0]] = cleVal[1];           
+        }
+      }
+      else{
+        parablink =  'erreur valeur blink';
+      }
+
+      //console.log('parablink ',parablink);
+      return parablink;
+
+    }
+
+    function TypeBlink(valeur){
+      var typeBlink;
+
+      if(/true|false/.test(valeur)){
+        typeBlink = 'bool';
+      }else if(/^\d{1,}:.+\&*/i.test(valeur)|| /^\-\d{1,}:.+\&*/i.test(valeur)){  
+        typeBlink = 'objet';
+      }else{
+        typeBlink = 'Valeur blink inconnu';
+      }
+      //console.log('typeBlink ',typeBlink);
+      return typeBlink;
+    } 
+
+    //Fonction qui détermine si clignote ou pas
+    function blink(oValeur, value){
+      var blinks = oValeur;
+	  
+
+      if($.type(oValeur) === 'object'){
+        for(var cleBlink in oValeur){
+		  if((/^\-\d+/.test(cleBlink) && /^\-\d+/.test(value)) || (/^\d+/.test(cleBlink) && /^\d+/.test(value))){	
+          	if(parseFloat(value) >= parseFloat(cleBlink)){
+            	blinks = oValeur[cleBlink];
+          	}
+          }
+        }
+      }
+      //console.log('blinks ',blinks);
+      return blinks;
+    }
+
+    // search the CSSOM for a specific -webkit-keyframe rule
+    function findKeyframesRule(rule){
+      // gather all stylesheets into an array
+      var ss = document.styleSheets;
+      //console.log('ss.length' +ss.length);
+      // loop through the stylesheets
+      for (var i = 0; i < ss.length; ++i) {
+        //console.log('i ' + i);   
+        // loop through all the rules
+        if (ss[i].cssRules != null){  
+          for (var j = 0; j < ss[i].cssRules.length; ++j) {
+             //console.log('j ' + j);   
+             //console.log('ss['+i+'].cssRules['+j+'].name ' +ss[i].cssRules[j].name );
+            if (ss[i].cssRules[j].name == rule){
+              //console.log('ss['+i+'].cssRules['+j+'].name  '+ ss[i].cssRules[j].name +' ' +ss[i].cssRules[j].type);
+              // find the keyframe rule whose name matches our passed over parameter and return that rule
+              if ((ss[i].cssRules[j].type == window.CSSRule.WEBKIT_KEYFRAMES_RULE || ss[i].cssRules[j].type == window.CSSRule.KEYFRAMES_RULE) && ss[i].cssRules[j].name == rule)
+              {
+                //console.log("rulls found");
+                return ss[i].cssRules[j];
+              }
+            }
+          }
+        }   
+      }
+      // rule not found
+      //console.log("rulls not found");
+      return null;
+    }
+
+    // remove old keyframes and add new ones
+    function change(anim, value) {
+      // find our -webkit-keyframe rule
+      var keyframes = findKeyframesRule(anim);
+       //console.log('anim '+anim); 
+      if (keyframes == null){
+        //console.log('anim return '+anim);
+        return;
+      }
+      //console.log('anim '+anim);
+      // remove the existing 0% and 100% rules
+      keyframes.deleteRule("0%");
+      keyframes.deleteRule("100%");
+
+      // create new 0% and 100% rules with the selected color
+      var tmpColorTuile;
+      var ColorTuileRGB;
+      var ColorTuileRGBA;
+      var tmpColorPolice;
+      var ColorPoliceRGB;
+      var ColorPoliceRGBA;
+      //check if color is definesd or use default color
+      if(couleur(couleurTuile, value)){
+        tmpColorTuile = couleur(couleurTuile, value);
+        tmpColorPolice = $('.colorTuile-#uid#').closest('.eqLogic-widget').css('color');
+      }
+      else{
+        tmpColorTuile = $('.colorTuile-#uid#').closest('.eqLogic-widget').css('background-color');
+        tmpColorPolice = $('.colorTuile-#uid#').closest('.eqLogic-widget').css('color');   
+        //console.log('Coulleur default')
+      }
+      //console.log('tmpColorTuile : ' +tmpColorTuile );      
+      //console.log('Type de couleurs : ' +TypeCouleur(tmpColorTuile) );
+      if(TypeCouleur(tmpColorTuile)=='rgba' )
+      {
+
+        var ColorTuileComp = /rgba?\(([012]?\d?\d?), ?([012]?\d?\d?), ?([012]?\d?\d?),?( ?[01]?\.?\d*)\)/.exec(tmpColorTuile);
+        var ColorPoliceComp= /rgba?\(([012]?\d?\d?), ?([012]?\d?\d?), ?([012]?\d?\d?),?( ?[01]?\.?\d*)\)/.exec(tmpColorPolice);
+        
+        ColorTuileRGBA = tmpColorTuile;
+        ColorTuileRGB = 'rgb(' + ColorTuileComp[1] +','+ ColorTuileComp[2]+ ','+ ColorTuileComp[3] +')';
+        ColorPoliceRGBA = 'rgba(' + ColorPoliceComp[1] +','+ ColorPoliceComp[2]+ ','+ ColorPoliceComp[3] +','+ ColorTuileComp[4]+')';                   
+        ColorPoliceRGB = tmpColorPolice;                     
+
+      }
+      else{
+        ColorTuileRGBA  = tmpColorTuile;
+        ColorTuileRGB   = tmpColorTuile;
+        ColorPoliceRGBA = tmpColorPolice;                   
+        ColorPoliceRGB  = tmpColorPolice;                   
+      }
+
+      //Récupère la couleur de base de la tuile
+      var couleurTuileBase;
+      if(!testVersionJeedom){
+        couleurTuileBase = $('.colorTuile-#uid#').closest('.eqLogic-widget').data('colorTuileBase');
+      }else{
+        couleurTuileBase = $('meta[name="colorTuile-#id#"]').attr('content');
+      }
+      
+      //Récupère la couleur du texte de base
+      var couleurTextBase;
+      if(!testVersionJeedom){
+        couleurTextBase = $('.colorTuile-#uid#').closest('.eqLogic-widget').data('colorTexteBase');
+      }else{
+        couleurTextBase = $('meta[name="colorTuile-#id#-text"]').attr('content');
+      }
+      
+      //Vérifie si la couleur de la tuile est identique à la couleur d'origine pour appliquer des couleurs de clignotement par défaut
+      if(couleurTuileBase == ColorTuileRGBA || couleurTuileBase == ColorTuileRGB){
+        ColorTuileRGBA = couleurTextBase;
+        ColorPoliceRGB = 'rgb('+/rgba?\(([012]?\d?\d?, ?[012]?\d?\d?, ?[012]?\d?\d?),?( ?[01]?\.?\d*)\)/.exec(couleurTuileBase)[1]+')';
+      }
+      //console.log('ColorTuileRGBA : ' +ColorTuileRGBA );      
+      //console.log('ColorPoliceRGB : ' +TypeCouleur(ColorPoliceRGB) );          
+	  //Applique les couleurs de clignotement         
+      keyframes.appendRule("0%{background-color:"+ColorTuileRGBA+";color:"+ColorPoliceRGB+";}");     
+      keyframes.appendRule("100%{background-color:"+couleurTuileBase+";color:"+ColorTuileRGBA+";}");
+
+    }
+
+
+	//*****************************************************************************************************************************************//
+    //******************************************* Action de mise à jours des valeurs Jeedom 3.0 ***********************************************//
+	//*****************************************************************************************************************************************//
+    
+      jeedom.cmd.update['#id#'] = function(_options){ 
+//console.log("Jeedom Update _options.display_value",_options.display_value);
+//console.log("Jeedom Update couleurTuile",couleurTuile);
+        
+        //Applique la couleur a la tuile et la fait clignoter ou pas
+        var blinkvalue = blink(clignoteTuile, _options.display_value);
+
+        if (blinkvalue == 1 || blinkvalue == '1'){
+
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-webkit-animation-name','none');
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-ms-animation-name','none');
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-moz-animation-name','none');
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-o-animation-name','none');
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('animation-name','none');
+
+          change('clignoteWeb#id#', _options.display_value);
+          change('clignoteMs#id#', _options.display_value);
+          change('clignoteMoz#id#', _options.display_value);
+          change('clignoteO#id#', _options.display_value);
+          change('clignote#id#', _options.display_value);     
+
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-webkit-animation-name','clignoteWeb#id#');       
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-webkit-animation-duration','1s');       
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-webkit-animation-iteration-count','infinite');
+
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-animation-name','clignoteMs#id#');       
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-ms-animation-duration','1s');       
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-ms-animation-iteration-count','infinite');
+
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-moz-animation-name','clignoteMoz#id#');       
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-moz-animation-duration','1s');       
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-moz-animation-iteration-count','infinite');       
+
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-o-animation-name','clignoteO#id#');       
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-o-animation-duration','1s');       
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-o-animation-iteration-count','infinite');             
+
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('animation-name','clignote#id#');
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('animation-duration','1s');       
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('animation-iteration-count','infinite');            
+
+        }else{
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-webkit-animation-name','none');
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-animation-name','none');
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-moz-animation-name','none');
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('-o-animation-name','none');
+          $('.colorTuile-#uid#').closest('.eqLogic-widget').css('animation-name','none');
+
+		  //Applique la couleur de la tuile en fonction de la valeur
+          if(couleur(couleurTuile, _options.display_value)){
+            //$('.colorTuile-#uid#').closest('.allowReorderCmd').css('background-color',couleur(couleurTuile, _options.display_value));
+            $('.colorTuile-#uid#').closest('.eqLogic-widget').css('background-color',couleur(couleurTuile, _options.display_value));
+          }else{
+
+            
+            
+            //Réupère la couleur de base de la tuile en fonction de la version jeedom
+            if(!testVersionJeedom){
+              $('.colorTuile-#uid#').closest('.eqLogic-widget').css('background-color',$('.colorTuile-#uid#').closest('.eqLogic-widget').data('colorTuileBase'));
+            }else{
+              $('.colorTuile-#uid#').closest('.eqLogic-widget').css('background-color',$('meta[name="colorTuile-#id#"]').attr('content'));
+            }
+          }
+          
+          //Applique la couleur du texte en fonction de la valeur
+          if(couleurText != 'rgb(255,255,255)'){
+            $('.colorTuile-#uid#').closest('.eqLogic-widget').css('color',couleur(couleurText, _options.display_value));
+          }else{
+
+            //Réupère la couleur de base du texte en fonction de la version jeedom
+            if(!testVersionJeedom){
+              $('.colorTuile-#uid#').closest('.eqLogic-widget').css('color',$('.colorTuile-#uid#').closest('.eqLogic-widget').data('couleurTextBase'));
+            }else{
+              $('.colorTuile-#uid#').closest('.eqLogic-widget').css('color',$('meta[name="colorTuile-#id#-text"]').attr('content'));
+            }
+          }
+        }
+      }
+
+
+      //Sauvegarde la couleur de la tuile d'origine en fonction de la version jeedom 
+      if( testVersionJeedom && $('meta[name="colorTuile-#id#"]').length == 0 ){
+        $('head').prepend('<meta name="colorTuile-#id#" content="'+$('.colorTuile-#uid#').closest('.eqLogic-widget').css('background-color')+'" />');
+      }else{
+        $('.colorTuile-#uid#').closest('.eqLogic-widget').data('colorTuileBase', $('.colorTuile-#uid#').closest('.eqLogic-widget').css('background-color'));
+      }
+      
+      //Sauvegarde la couleur du texte d'origine en fonction de la version jeedom 
+      if( testVersionJeedom && $('meta[name="colorTuile-#id#-text"]').length == 0 ){
+        $('head').prepend('<meta name="colorTuile-#id#-text" content="'+$('.colorTuile-#uid#').closest('.eqLogic-widget').css('color')+'" />');
+      }else{
+        $('.colorTuile-#uid#').closest('.eqLogic-widget').data('couleurTextBase', $('.colorTuile-#uid#').closest('.eqLogic-widget').css('color'));
+      }
+
+      //Execute la fonction update après le premier chargement de la page
+      jeedom.cmd.update['#id#']({display_value:'#state#',valueDate:'#valueDate#',collectDate:'#collectDate#'});
+
+    
+  </script>
+</div>
+
+
